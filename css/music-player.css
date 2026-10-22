@@ -1,0 +1,209 @@
+/* ============================================================
+   博客音乐播放器 - 样式表（配合 Pointer Events 拖拽版 JS）
+   ============================================================ */
+
+/* 外层容器 */
+.mp-wrap {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 99999;
+  font-family: inherit;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 右下角圆形唱片按钮 */
+.mp-toggle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .3s, box-shadow .3s, transform .15s;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+  position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-toggle:hover { background: rgba(255, 255, 255, 0.2); }
+.mp-toggle:active { transform: scale(1.06); }
+.mp-toggle img {
+  width: 100%; height: 100%;
+  object-fit: cover; border-radius: 50%;
+  pointer-events: none;
+  display: block;
+}
+.mp-toggle.mp-playing img { animation: mp-spin 8s linear infinite; }
+@keyframes mp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 展开面板 */
+.mp-panel {
+  position: absolute; right: 0; bottom: 70px; width: 320px;
+  max-height: 0; overflow: hidden; border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+  transition: max-height .45s cubic-bezier(.4, 0, .2, 1), opacity .3s, transform .45s cubic-bezier(.4, 0, .2, 1);
+  opacity: 0; transform: translateY(12px) scale(.96); transform-origin: bottom right;
+  pointer-events: none;
+}
+.mp-panel.mp-open {
+  max-height: 600px; opacity: 1; transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.mp-panel-inner { padding: 18px 18px 16px; }
+
+/* 封面与信息 */
+.mp-cover-row { display: flex; gap: 14px; align-items: center; }
+.mp-cover {
+  width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .4); border: 3px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+.mp-cover.mp-spinning { animation: mp-spin 8s linear infinite; }
+.mp-info { flex: 1; min-width: 0; }
+.mp-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: #fff; }
+.mp-artist { font-size: 12px; color: rgba(255, 255, 255, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ============ 进度条 —— 拖拽关键区域 ============ */
+.mp-progress-wrap {
+  margin-top: 8px;
+  cursor: pointer;
+  touch-action: none;              /* 阻止移动端手势抢事件 */
+  padding: 10px 8px;               /* 上下加大热区；左右 8px 容纳 thumb，避免被 panel overflow 裁剪 */
+  box-sizing: content-box;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  position: relative;
+  transition: height .2s;
+  pointer-events: none;            /* 事件统一交给 wrap 接收 */
+}
+.mp-progress-wrap:hover .mp-bar,
+.mp-progress-wrap.mp-seeking .mp-bar { height: 8px; }
+.mp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7e6fff, #ff6fb5);
+  border-radius: 6px;
+  width: 0%;
+  pointer-events: none;
+}
+.mp-bar-thumb {
+  position: absolute; top: 50%; transform: translate(-50%, -50%);
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  left: 0%; opacity: 0; transition: opacity .2s;
+  pointer-events: none;            /* 滑块不拦截拖拽 */
+}
+.mp-progress-wrap:hover .mp-bar-thumb,
+.mp-progress-wrap.mp-seeking .mp-bar-thumb { opacity: 1; }
+.mp-time {
+  display: flex; justify-content: space-between; margin-top: 2px;
+  font-size: 11px; color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 控制按钮 */
+.mp-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 10px; }
+.mp-btn {
+  background: none; border: none; color: rgba(255, 255, 255, 0.8);
+  cursor: pointer; padding: 6px; border-radius: 50%;
+  transition: all .2s; display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-btn:hover { color: #fff; transform: scale(1.15); }
+.mp-btn svg { width: 20px; height: 20px; }
+.mp-play-btn {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, #7e6fff, #9d6fff); color: #fff;
+  box-shadow: 0 6px 18px rgba(126, 111, 255, .5);
+}
+.mp-play-btn:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(126, 111, 255, .7); }
+.mp-play-btn svg { width: 22px; height: 22px; }
+.mp-mode-btn.mp-active { color: #7e6fff; }
+
+/* ============ 音量 ============ */
+.mp-vol-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 0 4px; }
+.mp-vol-slider {
+  flex: 1; height: 4px;
+  background: rgba(255,255,255,.15);
+  border-radius: 4px; position: relative; cursor: pointer;
+  touch-action: none;
+  padding: 8px 0;                  /* 左右 padding 必须为 0，与 JS volPct 的 rect 一致 */
+  box-sizing: content-box;
+  background-clip: content-box;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-vol-fill {
+  position: absolute; top: 8px; left: 0; height: 4px;
+  background: rgba(255,255,255,.6); border-radius: 4px;
+  width: 70%; pointer-events: none;
+}
+.mp-vol-icon {
+  color: rgba(255,255,255,.6); flex-shrink: 0; cursor: pointer;
+  background: none; border: none; padding: 4px; display: flex;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-vol-icon svg { width: 16px; height: 16px; }
+
+/* 播放列表 */
+.mp-list-toggle {
+  margin-top: 10px; text-align: center; font-size: 12px;
+  color: rgba(255,255,255,.5); cursor: pointer; padding: 6px;
+  border-radius: 8px; transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-list-toggle:hover { color: #fff; background: rgba(255,255,255,.08); }
+.mp-playlist {
+  max-height: 0; overflow: hidden; transition: max-height .35s ease;
+  border-top: 1px solid rgba(255,255,255,.08); margin-top: 8px;
+}
+.mp-playlist.mp-show { max-height: 200px; overflow-y: auto; }
+.mp-playlist::-webkit-scrollbar { width: 4px; }
+.mp-playlist::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 4px; }
+.mp-track {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; cursor: pointer;
+  transition: background .15s; border-radius: 8px;
+}
+.mp-track:hover { background: rgba(255,255,255,.08); }
+.mp-track.mp-active { background: rgba(126,111,255,.2); }
+.mp-track-idx {
+  width: 18px; font-size: 12px; color: rgba(255,255,255,.4);
+  text-align: center; font-variant-numeric: tabular-nums;
+  display: flex; align-items: center; justify-content: center;
+}
+.mp-track.mp-active .mp-track-idx { color: #7e6fff; }
+.mp-track-info { flex: 1; min-width: 0; }
+.mp-track-name { font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-track-artist { font-size: 11px; color: rgba(255,255,255,.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-track-dur { font-size: 11px; color: rgba(255,255,255,.4); font-variant-numeric: tabular-nums; }
+.mp-equalizer { display: none; align-items: flex-end; gap: 2px; height: 14px; }
+.mp-track.mp-active .mp-equalizer { display: flex; }
+.mp-track.mp-active .mp-idx-num { display: none; }
+.mp-eq-bar { width: 2px; background: #7e6fff; border-radius: 1px; animation: mp-eq 1s ease-in-out infinite; }
+.mp-eq-bar:nth-child(1) { animation-delay: 0s; height: 60%; }
+.mp-eq-bar:nth-child(2) { animation-delay: .2s; height: 100%; }
+.mp-eq-bar:nth-child(3) { animation-delay: .4s; height: 40%; }
+@keyframes mp-eq { 0%, 100% { transform: scaleY(.4); } 50% { transform: scaleY(1); } }
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .mp-wrap { right: 12px; bottom: 12px; }
+  .mp-panel { width: calc(100vw - 24px); right: 0; }
+}
